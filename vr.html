@@ -8,6 +8,12 @@
         init: function () {
           const el = this.el;
           const cursor = document.querySelector('a-cursor');
+          
+          // Добавляем элемент звука для клика
+          const soundEl = document.createElement('a-sound');
+          soundEl.setAttribute('src', '#clickSound'); // Замените на ваш звук
+          soundEl.setAttribute('autoplay', 'false'); // Не воспроизводим звук автоматически
+          el.appendChild(soundEl); // Добавляем звук к элементу
 
           el.addEventListener('mouseenter', () => {
             el.setAttribute('scale', '1.3 1.3 1'); // Увеличиваем размер обложки
@@ -15,8 +21,15 @@
           });
 
           el.addEventListener('mouseleave', () => {
-            el.setAttribute('scale', '1 1 1'); // яВозвращаем размер обратно
+            el.setAttribute('scale', '1 1 1'); // Возвращаем размер обратно
             cursor.setAttribute('color', 'yellow'); // Возвращаем цвет курсора
+          });
+
+          el.addEventListener('click', () => {
+            soundEl.components.sound.playSound(); // Запускаем звук при клике
+            setTimeout(() => {
+              el.components.sound.playSound(); // Запускаем звук трека с задержкой
+            }, 2000); // Задержка 2 секунды
           });
         }
       });
@@ -37,7 +50,7 @@
       <!-- Пол -->
       <a-plane rotation="-90 0 0" width="20" height="20" color="grey"></a-plane>
 
-      <!-- Красная зона -->
+      <!-- Красная зона -->Ы
       <a-box position="-8 0 -8" width="2" height="0.1" depth="2" color="#FF6347" animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; dur: 2000; loop: true"></a-box>
       <a-cylinder position="-8 0.5 -8" radius="0.2" height="1" color="#FFFFFF"></a-cylinder>
       <a-plane id="cover-plane1" position="-8 1.25 -8" rotation="-35 40 0" width="1.5" height="1" material="side: double" src="#cover1" sound="on: click; src: #track1" hover></a-plane>
@@ -67,10 +80,11 @@
         <img id="cover2" src="pic/cover2.png">
         <img id="cover3" src="pic/cover3.png">
         <img id="cover4" src="pic/cover4.png">
-        <audio id="track1" src="track1.mp3"></audio>
+        <audio id="track1" src="music/track1.mp3"></audio>
         <audio id="track2" src="track2.mp3"></audio>
         <audio id="track3" src="track3.mp3"></audio>
         <audio id="track4" src="track4.mp3"></audio>
+        <audio id="clickSound" src="music/click.mp3"></audio> <!-- Добавляем ваш звук клика -->
       </a-assets>
     </a-scene>
   </body>
