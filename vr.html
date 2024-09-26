@@ -3,6 +3,24 @@
   <head>
     <title>VR Музыкальная Галерея</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script>
+      AFRAME.registerComponent('hover', {
+        init: function () {
+          const el = this.el;
+          const cursor = document.querySelector('a-cursor');
+
+          el.addEventListener('mouseenter', () => {
+            el.setAttribute('scale', '1.3 1.3 1'); // Увеличиваем размер обложки
+            cursor.setAttribute('color', 'red'); // Меняем цвет курсора
+          });
+
+          el.addEventListener('mouseleave', () => {
+            el.setAttribute('scale', '1 1 1'); // Возвращаем размер обратно
+            cursor.setAttribute('color', 'yellow'); // Возвращаем цвет курсора
+          });
+        }
+      });
+    </script>
   </head>
   <body>
     <a-scene>
@@ -22,34 +40,33 @@
       <!-- Красная зона -->
       <a-box position="-8 0 -8" width="2" height="0.1" depth="2" color="#FF6347" animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; dur: 2000; loop: true"></a-box>
       <a-cylinder position="-8 0.5 -8" radius="0.2" height="1" color="#FFFFFF"></a-cylinder>
-      <a-plane id="cover-plane1" position="-8 1.25 -8" rotation="-45 40 90" width="1.5" height="1" material="side: double" src="#cover1" sound="on: click; src: #track1"></a-plane>
+      <a-plane id="cover-plane1" position="-8 1.25 -8" rotation="-35 40 0" width="1.5" height="1" material="side: double" src="#cover1" sound="on: click; src: #track1" hover></a-plane>
       <a-plane position="-8 0.01 -8" rotation="-90 0 0" width="4" height="4" color="#FF6347"></a-plane> <!-- Красный пол -->
 
       <!-- Зеленая зона -->
       <a-box position="8 0 -8" width="2" height="0.1" depth="2" color="#32CD32" animation="property: rotation; to: 0 360 0; dur: 5000; easing: linear; loop: true"></a-box>
       <a-cylinder position="8 0.5 -8" radius="0.2" height="1" color="#FFFFFF"></a-cylinder>
-      <a-plane id="cover-plane2" position="8 1.25 -8" rotation="-45 -40 90" width="1.5" height="1" material="side: double" src="#cover2" sound="on: click; src: #track2"></a-plane>
+      <a-plane id="cover-plane2" position="8 1.25 -8" rotation="-45 -40 0" width="1.5" height="1" material="side: double" src="#cover2" sound="on: click; src: #track2" hover></a-plane>
       <a-plane position="8 0.01 -8" rotation="-90 0 0" width="4" height="4" color="#32CD32"></a-plane> <!-- Зеленый пол -->
 
       <!-- Синяя зона -->
       <a-box position="-8 0 8" width="2" height="0.1" depth="2" color="#4682B4" animation="property: opacity; from: 0.5; to: 1; dur: 2000; loop: true"></a-box>
       <a-cylinder position="-8 0.5 8" radius="0.2" height="1" color="#FFFFFF"></a-cylinder>
-      <a-plane id="cover-plane3" position="-8 1.25 8" rotation="45 -40 90" width="1.5" height="1" material="side: double" src="#cover3" sound="on: click; src: #track3"></a-plane>
+      <a-plane id="cover-plane3" position="-8 1.25 8" rotation="-35 135 0" width="1.5" height="1" material="side: double" src="#cover3" sound="on: click; src: #track3" hover></a-plane>
       <a-plane position="-8 0.01 8" rotation="-90 0 0" width="4" height="4" color="#4682B4"></a-plane> <!-- Синий пол -->
 
       <!-- Желтая зона -->
       <a-box position="8 0 8" width="2" height="0.1" depth="2" color="#FFD700" animation="property: position; to: 8 0.2 8; dur: 1000; dir: alternate; loop: true"></a-box>
       <a-cylinder position="8 0.5 8" radius="0.2" height="1" color="#FFFFFF"></a-cylinder>
-      <a-plane id="cover-plane4" position="8 1.25 8" rotation="45 40 90" width="1.5" height="1" material="side: double" src="#cover4" sound="on: click; src: #track4"></a-plane>
+      <a-plane id="cover-plane4" position="8 1.25 8" rotation="-35 215 0" width="1.5" height="1" material="side: double" src="#cover4" sound="on: click; src: #track4" hover></a-plane>
       <a-plane position="8 0.01 8" rotation="-90 0 0" width="4" height="4" color="#FFD700"></a-plane> <!-- Желтый пол -->
-
 
       <!-- Ассеты -->
       <a-assets>
         <img id="cover1" src="pic/cover1.png">
-        <img id="cover2" src="pic/cover2.jpg">
-        <img id="cover3" src="cover3.png">
-        <img id="cover4" src="cover4.png">
+        <img id="cover2" src="pic/cover2.png">
+        <img id="cover3" src="pic/cover3.png">
+        <img id="cover4" src="pic/cover4.png">
         <audio id="track1" src="track1.mp3"></audio>
         <audio id="track2" src="track2.mp3"></audio>
         <audio id="track3" src="track3.mp3"></audio>
