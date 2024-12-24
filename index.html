@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Audio Visualizer</title>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="aframe-audioanalyser-component.js"></script>
+  <script src="aframe-particle-system-component.js"></script>
+  <script src="https://unpkg.com/aframe-environment-component@1.2.0/dist/aframe-environment-component.min.js"></script>
+  <style>
+    body { margin: 0; }
+    a-scene { height: 100vh; }
+  </style>
+  <script> 
+    document.addEventListener('DOMContentLoaded', () => {
+      const audioElements = document.querySelectorAll('audio');
+      const pauseIcon = document.getElementById('pause');
+  
+      // Функция обновления видимости pause
+      function updatePauseVisibility() {
+        const isPlaying = Array.from(audioElements).some(audio => !audio.paused);
+        pauseIcon.setAttribute('visible', isPlaying); // Управляем видимостью pause
+      }
+  
+      audioElements.forEach(audio => {
+        audio.addEventListener('play', updatePauseVisibility);
+        audio.addEventListener('pause', updatePauseVisibility);
+        audio.addEventListener('ended', updatePauseVisibility);
+      });
+  
+      // Устанавливаем изначальную видимость
+      updatePauseVisibility();
+    });
+  
+    function setupParticles(audioId) {
+      const audio = document.getElementById(audioId);
+  
+      // Включить все партиклы, когда музыка играет
+      audio.addEventListener('play', () => {
+        document.getElementById('particles1').setAttribute('particle-system', 'enabled', true);
+        document.getElementById('particles2').setAttribute('particle-system', 'enabled', true);
+        document.getElementById('particles3').setAttribute('particle-system', 'enabled', true);
+      });
+  
+      // Выключить все партиклы, когда музыка остановлена
+      audio.addEventListener('pause', () => {
+        document.getElementById('particles1').setAttribute('particle-system', 'enabled', false);
+        document.getElementById('particles2').setAttribute('particle-system', 'enabled', false);
+        document.getElementById('particles3').setAttribute('particle-system', 'enabled', false);
+      });
+  
+      // Остановить все партиклы, когда трек завершен
+      audio.addEventListener('ended', () => {
+        document.getElementById('particles1').setAttribute('particle-system', 'enabled', false);
+        document.getElementById('particles2').setAttribute('particle-system', 'enabled', false);
+        document.getElementById('particles3').setAttribute('particle-system', 'enabled', false);
+      });
+    }
+  
+    // Настраиваем партиклы для каждого трека
+    document.addEventListener('DOMContentLoaded', () => {
+      setupParticles('song');
+      setupParticles('song2');
+      setupParticles('song3');
+      setupParticles('song4');
+    });
+  </script>
+
+
+  <script>
+    
+   AFRAME.registerComponent('hover-effect', {
+        init: function () {
+          const el = this.el;
+          let originalScale = Object.assign({}, el.getAttribute('scale')); 
+
+          el.addEventListener('mouseenter', function () {
+            originalScale = Object.assign({}, el.getAttribute('scale')); 
+            el.setAttribute('scale', {
+              x: originalScale.x * 1.2,
+              y: originalScale.y * 1.2,
+              z: originalScale.z * 1.2
+            });
+          });
+
+          el.addEventListener('mouseleave', function () {
+            el.setAttribute('scale', originalScale);
+          });
+
+          el.addEventListener('click', function () {
+            const audioId = el.getAttribute('audio-id');
+            const audio = document.querySelector(`#${audioId}`);
+            audio.play(); // Запускаем трек
+
+            // Установка эквалайзера для текущего трека
+            setEqualizer(audioId);
+          });
+        }
+      });
+
+
+    function setEqualizer(audioId) {
+      const audio = document.getElementById(audioId);
+      const analyserEntity = document.getElementById('equalizer');
+      analyserEntity.setAttribute('audioanalyser', { src: `#${audioId}` });
+      const analyser = analyserEntity.components.audioanalyser;
+
+      if (analyser) {
+        const visualizersCount = 75;
+        const visualizers = document.querySelectorAll('.visualizer');
+
+        setInterval(function () {
+          const dataArray = new Uint8Array(analyser.analyser.frequencyBinCount);
+          analyser.analyser.getByteFrequencyData(dataArray);
+          const frequenciesPerBox = Math.floor(dataArray.length / visualizersCount);
+
+          visualizers.forEach((visualizer, index) => {
+            const start = index * frequenciesPerBox;
+            const frequencySlice = dataArray.slice(start, start + frequenciesPerBox);
+            const averageVolume = frequencySlice.reduce((acc, val) => acc + val, 0) / frequencySlice.length;
+
+            const scaleY = 0.5 + averageVolume / 50;
+            visualizer.setAttribute('scale', `0.5 ${scaleY} 0.5`);
+            visualizer.setAttribute('position', `${visualizer.object3D.position.x} ${scaleY / 2} ${visualizer.object3D.position.z}`);
+          });
+        }, 10);
+      } else {
+        console.log("Аудиоанализатор не инициализирован.");
+      }
+    }
+
+    function stopAllTracks() {
+      const audios = document.querySelectorAll('audio');
+      audios.forEach(audio => {
+        audio.pause(); // Остановить трек
+        audio.currentTime = 0; // Сбросить время трека
+      });
+    }
+  </script>
+  
+</head>
+<body>
+  <a-scene>
+    <a-assets>
+      <a-asset-item id="tree" src="3d/tree/scene.gltf"></a-asset-item>
+      <a-asset-item id="treestar" src="3d/tree_star/scene.gltf"></a-asset-item>
+    </a-assets>
+
+
+    <a-light type="ambient" color="#222"></a-light>
+    <a-light type="point" position="-1 2.5ss 13" intensity="1"></a-light>
+    <a-sky color="#222"></a-sky>
+
+    <a-entity environment="preset: tron; fog: 0.9"></a-entity>
+
+
+    <!-- Камера с управлением и курсором -->
+    <a-entity id="camera" camera wasd-controls look-controls position="0 1.6 5">
+      <a-cursor fuse="true" fuse-timeout="500" color="yellow"></a-cursor>
+    </a-entity>
+
+    <!-- Кнопка для остановки всех треков -->
+    <a-entity position="0 1 -5" geometry="primitive: plane; width: 2; height: 1" material="side: double; color: red; opacity: 0.7" 
+              text="value: Остановить все треки; align: center" 
+              event-set__mouseenter="scale: 1.1 1.1 1.1"
+              event-set__mouseleave="scale: 1 1 1"
+              onclick="stopAllTracks()">
+
+              <a-entity id="pause">
+              <a-plane  position="-0.1 0 0.01" rotation="0 0 0" width="0.15" height="0.35" material="side: double" ></a-plane>
+              <a-plane  position="0.1 0 0.01" rotation="0 0 0" width="0.15" height="0.35" material="side: double" ></a-plane>
+              
+              </a-entity>
+
+    </a-entity>
+
+
+    <a-entity gltf-model="#tree" position="15 0 -3" scale="2 2 2"></a-entity>
+    <a-entity gltf-model="#tree" position="20 0 1" scale="2 2 2"></a-entity>
+    <a-entity gltf-model="#tree" position="-15 0 -7" scale="2 2 2"></a-entity>
+    <a-entity gltf-model="#tree" position="-20 0 -1" scale="2 2 2"></a-entity>
+
+    <a-entity gltf-model="#treestar"  position="2 0 -15" scale="3 3 3"></a-entity>
+
+    <!-- Партиклы -->
+
+    <a-entity position="0 2.25 -15" particle-system="preset: snow; particleCount: 2500"></a-entity>
+
+
+    <a-entity id="particles1" position="0 -5.25 35" particle-system="color: orange, green, red; enabled: false;"></a-entity>
+    <a-entity id="particles2" position="20 -5.25 0" particle-system="color: red, green, orange; enabled: false;"></a-entity>
+    <a-entity id="particles3" position="-20 -5.25 0" particle-system="color: yellow, red, orange; enabled: false;"></a-entity>
+    
+
+    <!-- Красная зона -->
+    <a-box position="-8 0 -8" width="2" height="0.1" depth="2" color="#FF6347" animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; dur: 2000; loop: true"></a-box>
+    <a-cylinder position="-8 0.5 -8" radius="0.2" height="1" color="#FFFFFF"></a-cylinder>
+    <a-plane id="cover-plane1" position="-8 1.25 -8" rotation="-35 40 0" width="1.5" height="1" material="side: double" src="#cover1" hover-effect scale="1 1 1" audio-id="song"></a-plane>
+    <a-plane position="-8 0.01 -8" rotation="-90 0 0" width="4" height="4" color="#FF6347"></a-plane> <!-- Красный пол -->
+
+    <!-- Зеленая зона -->
+    <a-box position="8 0 -8" width="2" height="0.1" depth="2" color="#32CD32" animation="property: rotation; to: 0 360 0; dur: 5000; easing: linear; loop: true"></a-box>
+    <a-cylinder position="8 0.5 -8" radius="0.2" height="1" color="#FFFFFF"></a-cylinder>
+    <a-plane id="cover-plane2" position="8 1.25 -8" rotation="-45 -40 0" width="1.5" height="1" material="side: double" src="#cover2" hover-effect scale="1 1 1" audio-id="song2"></a-plane>
+    <a-plane position="8 0.01 -8" rotation="-90 0 0" width="4" height="4" color="#32CD32"></a-plane> <!-- Зеленый пол -->
+
+    <!-- Синяя зона -->
+    <a-box position="-8 0 8" width="2" height="0.1" depth="2" color="#4682B4" animation="property: opacity; from: 0.5; to: 1; dur: 2000; loop: true"></a-box>
+    <a-cylinder position="-8 0.5 8" radius="0.2" height="1" color="#FFFFFF"></a-cylinder>
+    <a-plane id="cover-plane3" position="-8 1.25 8" rotation="-35 135 0" width="1.5" height="1" material="side: double" src="#cover3" hover-effect scale="1 1 1" audio-id="song3"></a-plane>
+    <a-plane position="-8 0.01 8" rotation="-90 0 0" width="4" height="4" color="orange"></a-plane> <!-- Синий пол -->
+
+    <!-- Желтая зона -->
+    <a-box position="8 0 8" width="2" height="0.1" depth="2" color="#FFD700" animation="property: position; to: 8 0.2 8; dur: 1000; dir: alternate; loop: true"></a-box>
+    <a-cylinder position="8 0.5 8" radius="0.2" height="1" color="#FFFFFF"></a-cylinder>
+    <a-plane id="cover-plane4" position="8 1.25 8" rotation="-35 215 0" width="1.5" height="1" material="side: double" src="#cover4" hover-effect scale="1 1 1" audio-id="song4"></a-plane>
+    <a-plane position="8 0.01 8" rotation="-90 0 0" width="4" height="4" color="#FFD700"></a-plane> <!-- Желтый пол -->
+
+    <!-- Ассеты -->
+    <a-assets>
+      <img id="cover1" src="pic/cover1.png">
+      <img id="cover2" src="pic/cover2.png">
+      <img id="cover3" src="pic/cover3.png">
+      <img id="cover4" src="pic/cover4.png">
+      <audio id="song" src="music/track1.mp3"></audio>
+      <audio id="song2" src="music/track2.mp3"></audio>
+      <audio id="song3" src="music/track3.mp3"></audio>
+      <audio id="song4" src="music/track4.mp3"></audio>
+      <audio id="clickSound" src="music/click.mp3"></audio>
+    </a-assets>
+
+    <!-- эквалайзер -->
+    <a-entity id="equalizer" position="0 0 4">
+      <!-- кубы создаются динамически через JavaScript -->
+    </a-entity>
+
+    <script>
+      const equalizer = document.getElementById('equalizer');
+      const visualizersCount = 75;
+      const radius = 15; 
+
+      // генерация случайного цвета
+      function getRandomColor() {
+        return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+      }
+
+      for (let i = 0; i < visualizersCount; i++) {
+        const angle = (Math.PI / (visualizersCount - 1)) * i;
+        const x = radius * Math.cos(angle);
+        const z = radius * Math.sin(angle);
+        const visualizer = document.createElement('a-box');
+
+        visualizer.classList.add('visualizer');
+        visualizer.setAttribute('scale', '0.5 0.1 0.5'); 
+        visualizer.setAttribute('position', `${x} 0 ${z}`);
+        visualizer.setAttribute('material', 'color', getRandomColor());
+        equalizer.appendChild(visualizer);
+      }
+    </script>
+  </a-scene>
+</body>
+</html>

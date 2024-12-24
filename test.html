@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Audio Visualizer</title>
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="aframe-audioanalyser-component.js"></script>
+  <style>
+    body { margin: 0; }
+    a-scene { height: 100vh; }
+  </style>
+</head>
+<body>
+  <a-scene>
+    <a-light type="ambient" color="#222"></a-light>
+    <a-light type="point" position="0 1 0" intensity="2"></a-light>
+    <a-circle color="#333" opacity="0.8" rotation="-90 0 0" radius="12" roughness="1"></a-circle>
+    <a-sky color="#222"></a-sky>
+
+    <a-assets>
+      <audio id="song" src="music/track1.mp3" autoplay loop></audio>
+    </a-assets>
+
+    <!-- эквалайзер -->
+    <a-entity id="equalizer" position="0 0 5">
+      <!-- кубы создаются динамически через JavaScript -->
+    </a-entity>
+
+    <a-entity camera look-controls position="0 1 0"></a-entity>
+
+    <script>
+      const equalizer = document.getElementById('equalizer');
+      const song = document.getElementById('song');
+      const visualizersCount = 15;
+      const radius = 4; 
+
+      // генерация случайного цвета
+      function getRandomColor() {
+        return `#${Math.floor(Math.random()*16777215).toString(16)}`;
+      }
+
+
+      for (let i = 0; i < visualizersCount; i++) {
+        const angle = (Math.PI / (visualizersCount - 1)) * i;
+        const x = radius * Math.cos(angle);
+        const z = radius * Math.sin(angle);
+        const visualizer = document.createElement('a-box');
+
+        visualizer.classList.add('visualizer');
+        visualizer.setAttribute('scale', '0.5 0.1 0.5'); 
+        visualizer.setAttribute('position', `${x} 0 ${z}`);
+        visualizer.setAttribute('material', 'color', getRandomColor());
+        equalizer.appendChild(visualizer);
+      }
+
+      song.addEventListener('loadeddata', function () {
+        const analyserEntity = document.createElement('a-entity');
+        analyserEntity.setAttribute('audioanalyser', { src: '#song' });
+        document.querySelector('a-scene').appendChild(analyserEntity);
+        const analyser = analyserEntity.components.audioanalyser;
+
+        if (analyser) {
+          setInterval(function () {
+            const dataArray = new Uint8Array(analyser.analyser.frequencyBinCount);
+            analyser.analyser.getByteFrequencyData(dataArray);
+            const frequenciesPerBox = Math.floor(dataArray.length / visualizersCount);
+
+            document.querySelectorAll('.visualizer').forEach((visualizer, index) => {
+              const start = index * frequenciesPerBox;
+              const frequencySlice = dataArray.slice(start, start + frequenciesPerBox);
+              const averageVolume = frequencySlice.reduce((acc, val) => acc + val, 0) / frequencySlice.length;
+
+              const scaleY = 0.5 + averageVolume / 50;
+              visualizer.setAttribute('scale', `0.5 ${scaleY} 0.5`); // 
+              visualizer.setAttribute('position', `${visualizer.object3D.position.x} ${scaleY / 2} ${visualizer.object3D.position.z}`); 
+            });
+          }, 10);
+        } else {
+          console.log("Аудиоанализатор отвалился хелп");
+        }
+      });
+    </script>
+  </a-scene>
+</body>
+</html>
